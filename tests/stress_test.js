@@ -21,6 +21,9 @@ export const options = {
         { duration: '5m', target: 1000 },
         { duration: '10m', target: 0 }, // recovery stage
       ],
+      thresholds: {
+        http_req_duration: ['p(99)<150'], // 99% of requests must complete below 150ms
+      }
     },
     switchSort: {
       exec: 'switchSort',
@@ -34,6 +37,9 @@ export const options = {
         { duration: '5m', target: 1000 },
         { duration: '10m', target: 0 },
       ],
+      thresholds: {
+        http_req_duration: ['p(99)<150'], // 99% of requests must complete below 150ms
+      }
     },
   },
 };
@@ -53,7 +59,7 @@ export function firstLoad() {
   // get all the reviews
   const getReviews = {
     method: 'GET',
-    url: `http://localhost:3000/reviews/?${searchParams.toString()}`,
+    url: `http://localhost:3000/reviews/?product_id=${searchParams.toString()}`,
     params: {
       tags: {
         name: 'getAllURL',

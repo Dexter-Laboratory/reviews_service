@@ -2,47 +2,29 @@ const model = require('./model.js');
 
 module.exports = {
   getReviews: (req, res) => {
-    console.log('inside getReviews controller')
-    const params = req.query;
-    if (params.product_id === undefined) {
-      res.status(400).send('Missing product_id. Product_id is necessary for looking up reviews');
-    } else if (params.sort !== undefined && !['newest', 'helpful', 'relevant'].includes(params.sort)) {
-      res.status(400).send('Please choose a valid sort method');
-    } else {
-      if (params.page === undefined) {
-        params.page = 1;
-      }
-      if (params.count === undefined) {
-        params.count = 5;
-      }
+    let { product_id, page, count, sort, } = req.query;
+    product_id = Number(product_id);
+    page = Number(page) || 1;
+    count = Number(count) || 5;
+    sort = sort || 'relevant';
 
-      model.getReviews(params, (err, data) => {
-        if (err) {
-          res.status(400).send(err);
-        } else {
-          data.rows.forEach((record) => {
-            const unix = parseInt(record.date, 10);
-            const date = new Date(unix);
-            const year = date.getFullYear();
-            const month = date.getMonth();
-            const day = date.getDate();
-            const hour = date.getHours();
-            const min = date.getMinutes();
-            const sec = date.getSeconds();
-            const ms = date.getMilliseconds();
-            record.date = `${year}-${month < 10 ? '0' : ''}${month}-${day < 10 ? '0' : ''}${day}T${hour < 10 ? '0' : ''}${hour}:${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}:${ms < 10 ? '0' : ''}${ms}Z`;
-          });
-
-          const responseObj = {
-            product: params.product_id,
-            page: 0,
-            count: params.count,
-            results: data.rows,
-          };
-          res.json(responseObj);
-        }
+    return model.getReviews({
+      product_id, page, count, sort,
+    })
+      .then((data) => {
+        res.send({
+          product: product_id.toString(),
+          page: page - 1,
+          count,
+          results: data.rows,
+        });
+        res.status(200).end();
+      })
+      .catch((err) => {
+        res.send(err);
+        res.status(500).end();
       });
-    }
+    
   },
 
 //////////////////////////////////////////////////////////////////////////////////////

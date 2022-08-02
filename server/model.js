@@ -1,19 +1,35 @@
 const db = require('../db.js');
 
 module.exports = {
-  getReviews: (params, cb) => {
-    const sortMethod = {
-      newest: 'ORDER BY reviews.date DESC',
-      helpful: 'ORDER BY reviews.helpfulness DESC',
-      relevant: 'ORDER BY reviews.helpfulness, reviews.date DESC',
-    };
-    const queryStr = `SELECT reviews.reviewer_name as reviewer_name, reviews.*, array_agg(photos.url) as photos FROM reviews INNER JOIN photos ON reviews.id=photos.review_id WHERE reviews.product_id=${params.product_id} GROUP BY reviews.id ${params.sort ? sortMethod[params.sort] : ''}
-    LIMIT ${params.count ? params.count : 5}
-    `;
+  getReviews: ({count, page, sort, product_id,}) => {
+      let sortOption;
+      if (sort === 'newest') {
+        sortOption = 'date DESC, id ASC';
+      } else if (sort === 'helpful') {
+        sortOption = 'helpfulness DESC, id ASC';
+      } else if (sort === 'relevant') {
+        sortOption = 'date DESC, helpfulness DESC, id ASC';
+      } else{
+        sortOption = 'date DESC, helpfulness DESC, id ASC';
+      }
+      // offset to only display starting the right review_id
+      const offset = count * (page - 1);
+      const values = [product_id, count, offset];
 
-    db.query(queryStr, (err, results) => {
-      cb(err, results);
-    });
+      const queryInput = `
+          SELECT id::integer AS review_id, rating, summary, recommend AS recommend,
+          response, body, (TO_TIMESTAMP(date / 1000)) as date, reviewer_name, helpfulness,
+          (WITH images AS (SELECT id, url FROM photos WHERE review_id = reviews.id)
+            SELECT COALESCE((SELECT JSON_AGG(json_build_object('id', id, 'url', url))
+            FROM images), '[]'::json)) as photos
+          FROM reviews WHERE product_id = $1 AND reported = False
+          ORDER BY ${sortOption} LIMIT $2 OFFSET $3
+      `;
+      // console.log('before queryInput')
+      // const queryInput = `SELECT reviews.reviewer_name as reviewer_name, reviews.*, array_agg(photos.url) as photos FROM reviews INNER JOIN photos ON reviews.id=photos.review_id WHERE reviews.product_id=${product_id} GROUP BY reviews.id ${sortOption}
+      // `;
+      // console.log('after queryInput', queryInput)
+      return db.query(queryInput, values);
   },
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -63,7 +79,7 @@ postReview: async function(req){
     req.body.helpfulness
   ]);
   console.log('inside model postReview after first query');
-  
+
 
   const reviewID = result.rows[0].id;
   if (req.body.photos.length) {
