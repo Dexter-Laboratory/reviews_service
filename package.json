@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "reviews-sever": "nodemon --watch index.js"
+    "start": "nodemon --watch server server/index.js"
   },
   "repository": {
     "type": "git",

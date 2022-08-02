@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS reviews(
   helpfulness SMALLINT NOT NULL DEFAULT 0
 );
 
-
 DROP TABLE IF EXISTS photos;
 CREATE TABLE IF NOT EXISTS photos(
   id SERIAL PRIMARY KEY,
@@ -69,7 +68,6 @@ CREATE INDEX idx_characteristic_characteristic_id on characteristic_reviews(char
 CREATE INDEX idx_characteristic_reviews_review_id on characteristic_reviews(review_id);
 CREATE INDEX idx_characteristics_product_id on characteristics(product_id);
 CREATE INDEX idx_photos_review_id on photos(review_id);
-SELECT now();
 
 
 
