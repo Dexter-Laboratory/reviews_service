@@ -7,39 +7,39 @@ import { URLSearchParams } from 'https://jslib.k6.io/url/1.0.0/index.js';
 const sortOptions = ['helpful', 'relevant', 'newest'];
 
 export const options = {
+  // thresholds: {
+  //   http_req_duration: ['p(99)<50'], // 99% of requests must complete below 50ms
+  // },
   scenarios: {
     // when client first load the page, concurrently call getReviews and getMeta
     firstLoad: {
       exec: 'firstLoad',
       executor: 'ramping-vus',
       stages: [
-        { duration: '2m', target: 100 }, // below normal load
-        { duration: '5m', target: 100 },
-        { duration: '2m', target: 500 },
-        { duration: '5m', target: 500 },
-        { duration: '2m', target: 1000 },
-        { duration: '5m', target: 1000 },
-        { duration: '10m', target: 0 }, // recovery stage
-      ],
-      thresholds: {
-        http_req_duration: ['p(99)<150'], // 99% of requests must complete below 150ms
-      }
+        { duration: '1m', target: 200 }
+        // { duration: '2m', target: 100 }, // below normal load
+        // { duration: '5m', target: 100 },
+        // { duration: '2m', target: 500 },
+        // { duration: '5m', target: 500 },
+        // { duration: '2m', target: 1000 },
+        // { duration: '5m', target: 1000 },
+        // { duration: '10m', target: 0 }, // recovery stage
+      ]
     },
     switchSort: {
       exec: 'switchSort',
       executor: 'ramping-vus',
       stages: [
-        { duration: '2m', target: 100 },
-        { duration: '5m', target: 100 },
-        { duration: '2m', target: 500 },
-        { duration: '5m', target: 500 },
-        { duration: '2m', target: 1000 },
-        { duration: '5m', target: 1000 },
-        { duration: '10m', target: 0 },
-      ],
-      thresholds: {
-        http_req_duration: ['p(99)<150'], // 99% of requests must complete below 150ms
-      }
+        { duration: '1m', target: 200 }
+
+        // { duration: '2m', target: 100 },
+        // { duration: '5m', target: 100 },
+        // { duration: '2m', target: 500 },
+        // { duration: '5m', target: 500 },
+        // { duration: '2m', target: 1000 },
+        // { duration: '5m', target: 1000 },
+        // { duration: '10m', target: 0 },
+      ]
     },
   },
 };
@@ -82,7 +82,6 @@ export function firstLoad() {
     },
   };
   tagWithCurrentStageIndex();
-
   // batch test below routes
   http.batch([getReviews, getMeta]);
 }

@@ -26,21 +26,6 @@ describe('fetch data from getReviews', () => {
       });
   });
 
-  it('provides the correct page number and query results count when provided with search paremeters', () => {
-    request
-      .get('/reviews')
-      .query({
-        product_id: 486888,
-        count: 4,
-        page: 2,
-      })
-      .then((response) => {
-        expect(response.body.results).toHaveLength(4);
-        expect(response.body.page).toEqual(1);
-        expect(response.body.count).toEqual(4);
-      });
-  });
-
   it('should responds with the expected data types and correct information', () => {
     request
       .get('/reviews')

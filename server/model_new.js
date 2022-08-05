@@ -30,87 +30,58 @@ module.exports = {
   },
 
 //////////////////////////////////////////////////////////////////////////////////////
-postReview: async function(req){
+
+postReview: function({
+  product_id, rating, summary, body, recommend, reported, name, email, photos, helpfulness, characteristics,
+}){
   console.log('inside model postReview')
+  console.log('product_id', product_id, 'rating: ', rating)
   const date = Date.now();
-    const queryArray = [];
-  const reviewQuery = `
-  INSERT INTO reviews (
-    product_id,
-    date,
-    rating,
-    summary,
-    body,
-    reported,
-    recommend,
-    reviewer_name,
-    reviewer_email,
-    helpfulness
-  )
-  VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8,
-    $9,
-    $10
-  )
-  RETURNING id
-  ;`;
-  console.log('inside model postReview before first query')
-  const result = await db.query(reviewQuery, [
-    req.body.product_id,
-    date,
-    req.body.rating,
-    req.body.summary,
-    req.body.body,
-    req.body.recommend,
-    req.body.reported,
-    req.body.name,
-    req.body.email,
-    req.body.helpfulness
-  ]);
-  console.log('inside model postReview after first query');
+  const values = [product_id, date, rating, summary, body, recommend, reported, name, email,
+    helpfulness];
+  // $11 is characteristics
+  console.log('values: ', values)
 
-  const reviewID = result.rows[0].id;
-  if (req.body.photos.length) {
-    req.body.photos.forEach((url) => {
-      queryArray.push(db.query(`
-      INSERT INTO photos (
-        review_id,
-        url
-      )
-      VALUES (
-        $1,
-        $2
-      )
-      ;`, [reviewID, url]));
-    });
-  }
-  const chars = req.body.characteristics;
-  if (Object.keys(chars).length) {
-    Object.keys(chars).forEach((char) => {
-      queryArray.push(db.query(`
-      INSERT INTO characteristic_reviews (
-        characteristic_id,
-        review_id,
-        value
-      ) VALUES (
-        $1,
-        $2,
-        $3
-      )
-      ;`,[char.id, reviewID, char.value]));
-    });
-  }
+  var queryInput;
 
-  return Promise.all(queryArray)
-     .then(() => {
-      console.log('review added!')})
+  console.log('inside model postReview before defining query')
+  if (photos.length === 0) {
+    console.log('inside empty photo array')
+    queryInput = `
+    WITH reviewsInsert AS (
+      INSERT INTO reviews (product_id, date, rating, summary, body, recommend, reported, reviewer_name, reviewer_email, helpfulness)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id AS reviewId
+    ),
+     characteristicsPair AS (SELECT * FROM json_each_text(${characteristics})),
+    characteristicReviewsInsert AS (
+      INSERT INTO characteristic_reviews (review_id, characteristic_id, value)
+      SELECT key::integer, (SELECT reviewId FROM reviewsInsert), value::integer
+      FROM characteristicsPair
+    )`
+  } else {
+    values.push(photos);
+    queryInput = `
+    WITH reviewsInsert AS (
+      INSERT INTO reviews (product_id, date, rating, summary, body, recommend, reported,
+        reviewer_name, reviewer_email, helpfulness)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id AS reviewId
+    ),
+    characteristicsPair AS (SELECT * FROM json_each_text(${characteristics})),
+    characteristicReviewsInsert AS (
+      INSERT INTO characteristic_reviews (review_id, characteristic_id, value)
+      SELECT key::integer, (SELECT reviewId FROM reviewsInsert), value::integer
+      FROM characteristicsPair
+    )
+    INSERT INTO photos (review_id, url)
+    SELECT (SELECT reviewId FROM reviewsInsert), unnest(${photos}::text[])
+    `;
+  }
+  console.log('values before db.query is:', values)
+
+  console.log('queryInput before db.query is:', queryInput)
+  return db.query(queryInput, values);
  },
 
 //////////////////////////////////////////////////////////////////////////////////////

@@ -62,6 +62,14 @@ FROM '/Users/rxlbas/Desktop/system_design/reviews_service/data/characteristic_re
 DELIMITER ','
 CSV HEADER;
 
+
+-- -- reset each table's id to start from the end
+-- ALTER SEQUENCE reviews_id_seq RESTART WITH 5774953;
+-- ALTER SEQUENCE photos_id_seq RESTART WITH 2742541;
+-- ALTER SEQUENCE characteristics_id_seq RESTART WITH 3347680;
+-- ALTER SEQUENCE characteristic_reviews_id_seq RESTART WITH 19327576;
+
+
 -- create index for better read times
 CREATE INDEX idx_reviews_product_id on reviews(product_id);
 CREATE INDEX idx_characteristic_characteristic_id on characteristic_reviews(characteristic_id);

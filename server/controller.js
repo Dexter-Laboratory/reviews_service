@@ -24,7 +24,7 @@ module.exports = {
         res.send(err);
         res.status(500).end();
       });
-    
+
   },
 
 //////////////////////////////////////////////////////////////////////////////////////
@@ -50,8 +50,8 @@ module.exports = {
       model.postReview(req)
       .then(()=>
       {res.sendStatus(201)})
-      .catch(()=>{
-        console.log("error in controller .catch block");
+      .catch((err)=>{
+        console.log("error in controller .catch block: ", err);
         res.status(400).send("Err")});
     }
   },
